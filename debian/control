@@ -1,0 +1,14 @@
+Source: huayra-accesibility-settings
+Section: admin
+Priority: normal
+Maintainer: Matías de Lellis <mati86dl@gmail.com>
+Standards-Version: 3.9.5
+Build-Depends: debhelper (>= 8.0.0)
+
+Package: huayra-accesibility-settings
+Depends: ${misc:Depends}
+Architecture: i386 amd64
+Priority: normal
+Description: Panel de control para activar opciones accesibles
+ Este paquete contiene un panel de control para cambiar las opciones
+ de accesibilidad en Huayra GNU/Linux
