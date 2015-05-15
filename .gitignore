@@ -1,0 +1,7 @@
+/src/huayra-accessibility-settings
+/build-aux
+/autom4te.cache
+configure
+*.in
+*.m4
+*~
