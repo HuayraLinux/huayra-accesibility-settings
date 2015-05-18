@@ -51,6 +51,59 @@
 
 static GSettings *mouse_settings = NULL;
 
+/* */
+
+static gboolean
+dbus_interface_name_is_runing (const gchar *name)
+{
+	GDBusConnection *gconnection;
+	GError *gerror = NULL, *error = NULL;
+	GVariant *v;
+	GVariantIter *iter;
+	const gchar *str = NULL;
+	gboolean result = FALSE;
+
+	gconnection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &gerror);
+	if (gconnection == NULL) {
+		g_message ("Failed to get session bus: %s", gerror->message);
+		g_error_free (gerror);
+
+		return FALSE;
+	}
+
+	v = g_dbus_connection_call_sync (gconnection,
+	                                 "org.freedesktop.DBus",
+	                                 "/org/freedesktop/DBus",
+	                                 "org.freedesktop.DBus",
+	                                 "ListNames",
+	                                 NULL,
+	                                 G_VARIANT_TYPE ("(as)"),
+	                                 G_DBUS_CALL_FLAGS_NONE,
+	                                 -1,
+	                                 NULL,
+	                                 &error);
+
+	if (error) {
+		g_critical ("Could not get a list of names registered on the session bus, %s",
+		            error ? error->message : "no error given");
+		g_clear_error (&error);
+		return FALSE;
+	}
+
+	g_variant_get (v, "(as)", &iter);
+	while (g_variant_iter_loop (iter, "&s", &str)) {
+		if (g_strcmp0(str, name) == 0) {
+			result = TRUE;
+			break;
+		}
+	}
+
+	g_variant_iter_free (iter);
+	g_variant_unref (v);
+
+	return result;
+}
+
 /* Settings callbacks */
 
 static void
@@ -157,6 +210,43 @@ icon_cursor_theme_changed (GtkComboBox *combo,
 	g_settings_set_string (mouse_settings, KEY_CURSOR_THEME, active);
 }
 
+static void
+on_screen_keyboard_activated (GtkButton *button,
+                              gpointer   user_data)
+{
+	GError *error = NULL;
+	gboolean result;
+
+	/* TODO: Get default app*/
+
+	if (dbus_interface_name_is_runing("org.florence.Keyboard"))
+		return;
+
+	result = g_spawn_command_line_async ("florence", &error);
+	if (G_UNLIKELY (result == FALSE)) {
+		g_critical ("Can't launch keyboard %s", error->message);
+		g_error_free (error);
+	}
+	g_critical ("Can't launch keyboard");
+}
+
+static void
+on_screen_ruler_activated (GtkButton *button,
+                           gpointer   user_data)
+{
+	GError *error = NULL;
+	gboolean result;
+
+	/* TODO: Set a dconf setting. */
+	result = g_spawn_command_line_async ("screenruler", &error);
+	if (G_UNLIKELY (result == FALSE)) {
+		g_critical ("Can't launch screen ruler: %s", error->message);
+		g_error_free (error);
+	}
+	g_spawn_command_line_async ("screenruler", &error);
+}
+
+
 /* */
 
 static void
@@ -164,7 +254,7 @@ activate (GtkApplication *app,
           gpointer        user_data)
 {
 	GtkWidget *window;
-	GtkWidget *table, *label, *check_button, *combo, *scale;
+	GtkWidget *table, *label, *check_button, *combo, *scale, *button;
 	GtkCellRenderer *renderer;
 	guint row = 0;
 
@@ -224,11 +314,15 @@ activate (GtkApplication *app,
 
 	huayra_hig_workarea_table_add_section_title (table, &row, _("Herramientas"));
 
-	check_button = gtk_check_button_new_with_label (_("Utilizar teclado en pantalla"));
-	huayra_hig_workarea_table_add_wide_control (table, &row, check_button);
+	button = gtk_button_new_with_label (_("Utilizar teclado en pantalla"));
+	huayra_hig_workarea_table_add_wide_control (table, &row, button);
+ 	g_signal_connect (button, "clicked",
+ 	                  G_CALLBACK(on_screen_keyboard_activated), NULL);
 
-	check_button = gtk_check_button_new_with_label (_("Utilizar regla en pantalla"));
-	huayra_hig_workarea_table_add_wide_control (table, &row, check_button);
+	button = gtk_button_new_with_label (_("Utilizar regla en pantalla"));
+	huayra_hig_workarea_table_add_wide_control (table, &row, button);
+ 	g_signal_connect (button, "clicked",
+ 	                  G_CALLBACK(on_screen_ruler_activated), NULL);
 
 	gtk_container_add (GTK_CONTAINER(window), table);
 
