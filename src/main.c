@@ -250,6 +250,14 @@ on_screen_ruler_activated (GtkButton *button,
 /* */
 
 static void
+dialog_response_cb (GtkDialog *dialog,
+                    gint       response,
+                    gpointer   user_data)
+{
+	gtk_widget_destroy(GTK_WIDGET(dialog));
+}
+
+static void
 activate (GtkApplication *app,
           gpointer        user_data)
 {
@@ -264,9 +272,15 @@ activate (GtkApplication *app,
 
 	/* Window */
 
-	window = gtk_application_window_new (app);
+	window = gtk_dialog_new ();
+	gtk_window_set_application (GTK_WINDOW (window), app);
 	gtk_window_set_title (GTK_WINDOW (window), _("Huayra Accessibility Settings"));
+	gtk_window_set_icon_name (GTK_WINDOW (window), "preferences-desktop-accessibility");
 	gtk_window_set_default_size (GTK_WINDOW (window), 300, 200);
+
+	gtk_window_set_position (GTK_WINDOW (window), GTK_WIN_POS_CENTER);
+
+	/* Content */
 
 	table = huayra_hig_workarea_table_new ();
 
@@ -288,13 +302,13 @@ activate (GtkApplication *app,
 
 	label = gtk_label_new (_("Iconos del raton"));
 	combo = gtk_combo_box_new_with_model (GTK_TREE_MODEL(mouse_settings_themes_populate_store()));
- 	g_signal_connect (combo, "changed",
- 	                  G_CALLBACK(icon_cursor_theme_changed), NULL);
+	g_signal_connect (combo, "changed",
+	                  G_CALLBACK(icon_cursor_theme_changed), NULL);
 
 	renderer = gtk_cell_renderer_pixbuf_new ();
 	gtk_cell_layout_pack_start (GTK_CELL_LAYOUT(combo), renderer, TRUE);
 	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo), renderer, "pixbuf", 0, NULL);
- 	renderer = gtk_cell_renderer_text_new();
+	renderer = gtk_cell_renderer_text_new();
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combo), renderer, TRUE);
 	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo), renderer, "text", 3, NULL);
 
@@ -316,15 +330,23 @@ activate (GtkApplication *app,
 
 	button = gtk_button_new_with_label (_("Utilizar teclado en pantalla"));
 	huayra_hig_workarea_table_add_wide_control (table, &row, button);
- 	g_signal_connect (button, "clicked",
- 	                  G_CALLBACK(on_screen_keyboard_activated), NULL);
+	g_signal_connect (button, "clicked",
+	                  G_CALLBACK(on_screen_keyboard_activated), NULL);
 
 	button = gtk_button_new_with_label (_("Utilizar regla en pantalla"));
 	huayra_hig_workarea_table_add_wide_control (table, &row, button);
- 	g_signal_connect (button, "clicked",
- 	                  G_CALLBACK(on_screen_ruler_activated), NULL);
+	g_signal_connect (button, "clicked",
+	                  G_CALLBACK(on_screen_ruler_activated), NULL);
 
-	gtk_container_add (GTK_CONTAINER(window), table);
+	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area (GTK_DIALOG(window))),
+	                    table, FALSE, FALSE, 0);
+
+	gtk_dialog_add_buttons (GTK_DIALOG (window),
+	                        _("Aceptar"), GTK_RESPONSE_OK,
+	                        NULL);
+
+	g_signal_connect (window, "response",
+	                  G_CALLBACK (dialog_response_cb), NULL);
 
 	gtk_widget_show_all (window);
 }
