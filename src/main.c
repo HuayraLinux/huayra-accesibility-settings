@@ -54,7 +54,7 @@ static GSettings *mouse_settings = NULL;
 /* */
 
 static gboolean
-dbus_interface_name_is_runing (const gchar *name)
+dbus_interface_name_is_running (const gchar *name)
 {
 	GDBusConnection *gconnection;
 	GError *gerror = NULL, *error = NULL;
@@ -102,6 +102,26 @@ dbus_interface_name_is_runing (const gchar *name)
 	g_variant_unref (v);
 
 	return result;
+}
+
+static gboolean
+process_is_running (const char * name)
+{
+	int num_processes;
+	char * command = g_strdup_printf ("pidof %s | wc -l", name);
+	FILE *fp = popen(command, "r");
+
+	fscanf(fp, "%d", &num_processes);
+	pclose(fp);
+
+	g_free (command);
+
+	if (num_processes > 0) {
+		return TRUE;
+	}
+	else {
+		return FALSE;
+	}
 }
 
 /* Settings callbacks */
@@ -219,7 +239,7 @@ on_screen_keyboard_activated (GtkButton *button,
 
 	/* TODO: Get default app*/
 
-	if (dbus_interface_name_is_runing("org.florence.Keyboard"))
+	if (dbus_interface_name_is_running ("org.florence.Keyboard"))
 		return;
 
 	result = g_spawn_command_line_async ("florence", &error);
@@ -227,7 +247,6 @@ on_screen_keyboard_activated (GtkButton *button,
 		g_critical ("Can't launch keyboard %s", error->message);
 		g_error_free (error);
 	}
-	g_critical ("Can't launch keyboard");
 }
 
 static void
@@ -236,6 +255,9 @@ on_screen_ruler_activated (GtkButton *button,
 {
 	GError *error = NULL;
 	gboolean result;
+
+	if (process_is_running ("ruby /usr/bin/screenruler"))
+		return;
 
 	/* TODO: Set a dconf setting. */
 	result = g_spawn_command_line_async ("screenruler", &error);
