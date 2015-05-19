@@ -126,6 +126,24 @@ process_is_running (const char * name)
 
 /* Settings callbacks */
 
+static gboolean
+high_contrast_is_selected (void)
+{
+	GSettings *interface_settings = NULL;
+	gchar *gtk_theme = NULL;
+	gboolean high_gtk_theme;
+
+	interface_settings = g_settings_new (INTERFACE_SCHEMA);
+
+	gtk_theme = g_settings_get_string(interface_settings, KEY_GTK_THEME);
+	high_gtk_theme = (g_strcmp0(gtk_theme, HIGH_CONTRAST_THEME) == 0);
+
+	g_object_unref (interface_settings);
+	g_free (gtk_theme);
+
+	return high_gtk_theme;
+}
+
 static void
 high_contrast_checkbutton_toggled (GtkToggleButton *button,
                                    gpointer         user_data)
@@ -311,6 +329,8 @@ activate (GtkApplication *app,
 	huayra_hig_workarea_table_add_section_title (table, &row, _("Visual accessibility"));
 
 	check_button = gtk_check_button_new_with_label (_("Realzar contraste en los colores"));
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(check_button),
+		high_contrast_is_selected());
 	huayra_hig_workarea_table_add_wide_control (table, &row, check_button);
 	g_signal_connect (check_button, "toggled",
 	                  G_CALLBACK (high_contrast_checkbutton_toggled), NULL);
