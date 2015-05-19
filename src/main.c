@@ -256,7 +256,7 @@ icon_cursor_theme_changed (GtkComboBox *combo,
 	gtk_combo_box_get_active_iter(combo, &iter);
 
 	model = gtk_combo_box_get_model(combo);
-	gtk_tree_model_get(model, &iter, 2, &active, -1);
+	gtk_tree_model_get(model, &iter, COLUMN_THEME_NAME, &active, -1);
 
 	g_settings_set_string (mouse_settings, KEY_CURSOR_THEME, active);
 }
@@ -394,15 +394,15 @@ activate (GtkApplication *app,
 
 	renderer = gtk_cell_renderer_pixbuf_new ();
 	gtk_cell_layout_pack_start (GTK_CELL_LAYOUT(combo), renderer, TRUE);
-	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo), renderer, "pixbuf", 0, NULL);
+	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo), renderer, "pixbuf", COLUMN_THEME_PIXBUF, NULL);
 	renderer = gtk_cell_renderer_text_new();
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combo), renderer, TRUE);
-	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo), renderer, "text", 3, NULL);
+	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo), renderer, "text", COLUMN_THEME_DISPLAY_NAME, NULL);
 
 	huayra_hig_workarea_table_add_row (table, &row, label, combo);
 
 	label = gtk_label_new (_("Tamaño del cursor"));
-	scale = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 2);
+	scale = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 16, 128, 2);
 	gtk_scale_set_draw_value (GTK_SCALE(scale), FALSE);
 
 	g_settings_bind (mouse_settings, KEY_CURSOR_SIZE,
