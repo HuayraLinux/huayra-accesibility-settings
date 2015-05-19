@@ -1,7 +1,13 @@
 /src/huayra-accessibility-settings
+/src/Makefile
+/src/.deps
+/src/*.o
 /build-aux
 /autom4te.cache
-configure
+/libtool
+/stamp-h1
+/Makefile
+/configure
 *.in
 *.m4
-*~
+*config.*
