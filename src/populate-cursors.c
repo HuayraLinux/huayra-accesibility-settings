@@ -41,16 +41,6 @@ static const gchar *preview_names[] = {
     "top_side",            "top_tee"
 };
 
-enum
-{
-    COLUMN_THEME_PIXBUF,
-    COLUMN_THEME_PATH,
-    COLUMN_THEME_NAME,
-    COLUMN_THEME_DISPLAY_NAME,
-    COLUMN_THEME_COMMENT,
-    N_THEME_COLUMNS
-};
-
 #define PREVIEW_ROWS    (3)
 #define PREVIEW_COLUMNS (6)
 #define PREVIEW_SIZE    (24)

@@ -211,6 +211,19 @@ get_dpi_from_x_server (void)
 	return dpi;
 }
 
+static gboolean
+large_print_is_selected (void)
+{
+	GSettings *settings = NULL;
+	gdouble dpi;
+
+	settings = g_settings_new (FONT_RENDER_SCHEMA);
+	dpi = g_settings_get_double (settings, KEY_FONT_DPI);
+	g_object_unref (settings);
+
+	return (dpi > get_dpi_from_x_server());
+}
+
 static void
 large_print_checkbutton_toggled (GtkToggleButton *button,
                                  gpointer         user_data)
@@ -286,6 +299,35 @@ on_screen_ruler_activated (GtkButton *button,
 	g_spawn_command_line_async ("screenruler", &error);
 }
 
+/* */
+
+static void
+cursor_combo_box_select_current_theme (GtkWidget *combo)
+{
+	GtkTreeModel *model = NULL;
+	GtkTreeIter iter;
+	gchar *theme, *value = NULL;
+	gboolean have_found = FALSE;
+
+	theme = g_settings_get_string (mouse_settings, KEY_CURSOR_THEME);
+
+	if (!theme)
+		return;
+
+	model = gtk_combo_box_get_model (GTK_COMBO_BOX(combo));
+	gtk_tree_model_get_iter_first (GTK_TREE_MODEL(model), &iter);
+	do
+	{
+		gtk_tree_model_get (GTK_TREE_MODEL(model), &iter,
+		                    COLUMN_THEME_NAME, &value, -1);
+
+		if (!g_ascii_strncasecmp (value, theme, -1))
+			break;
+	} while (have_found = gtk_tree_model_iter_next (GTK_TREE_MODEL(model), &iter));
+
+	if (have_found)
+		gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combo), &iter);
+}
 
 /* */
 
@@ -336,6 +378,8 @@ activate (GtkApplication *app,
 	                  G_CALLBACK (high_contrast_checkbutton_toggled), NULL);
 
 	check_button = gtk_check_button_new_with_label (_("Hacer el texto mas grande y facil de leer"));
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(check_button),
+		large_print_is_selected());
 	huayra_hig_workarea_table_add_wide_control (table, &row, check_button);
 	g_signal_connect (check_button, "toggled",
 	                  G_CALLBACK (large_print_checkbutton_toggled), NULL);
@@ -344,6 +388,7 @@ activate (GtkApplication *app,
 
 	label = gtk_label_new (_("Iconos del raton"));
 	combo = gtk_combo_box_new_with_model (GTK_TREE_MODEL(mouse_settings_themes_populate_store()));
+	cursor_combo_box_select_current_theme (combo);
 	g_signal_connect (combo, "changed",
 	                  G_CALLBACK(icon_cursor_theme_changed), NULL);
 

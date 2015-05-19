@@ -19,5 +19,15 @@
 
 #include <gtk/gtk.h>
 
+enum
+{
+    COLUMN_THEME_PIXBUF,
+    COLUMN_THEME_PATH,
+    COLUMN_THEME_NAME,
+    COLUMN_THEME_DISPLAY_NAME,
+    COLUMN_THEME_COMMENT,
+    N_THEME_COLUMNS
+};
+
 GtkListStore *
 mouse_settings_themes_populate_store (void);
