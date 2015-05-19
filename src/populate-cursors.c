@@ -22,9 +22,12 @@
  * Based on: http://git.xfce.org/xfce/xfce4-settings/tree/dialogs/mouse-settings/main.c
  */
 
+#define _(x) x
+
+#include <glib.h>
 #include <X11/Xcursor/Xcursor.h>
-#include <libxfce4util/libxfce4util.h>
 #include <math.h>
+#include <string.h>
 
 #include "populate-cursors.h"
 
@@ -251,7 +254,7 @@ mouse_settings_themes_populate_store (void)
     const gchar        *theme;
     gchar              *filename;
     gchar              *index_file;
-    XfceRc             *rc;
+    GKeyFile           *rc;
     const gchar        *name;
     const gchar        *comment;
     GtkTreeIter         iter;
@@ -348,18 +351,15 @@ mouse_settings_themes_populate_store (void)
                         if (g_file_test (index_file, G_FILE_TEST_IS_REGULAR))
                         {
                             /* open theme desktop file */
-                            rc = xfce_rc_simple_open (index_file, TRUE);
-                            if (G_LIKELY (rc))
+                            rc = g_key_file_new ();
+                            if (G_LIKELY (g_key_file_load_from_file (rc, index_file, G_KEY_FILE_NONE, NULL)))
                             {
                                 /* check for the theme group */
-                                if (xfce_rc_has_group (rc, "Icon Theme"))
+                                if (g_key_file_has_group (rc, "Icon Theme"))
                                 {
-                                    /* set group */
-                                    xfce_rc_set_group (rc, "Icon Theme");
-
                                     /* read values */
-                                    name = xfce_rc_read_entry (rc, "Name", theme);
-                                    comment = xfce_rc_read_entry (rc, "Comment", NULL);
+                                    name = g_key_file_get_string (rc, "Icon Theme", "Name", NULL);
+                                    comment = g_key_file_get_string (rc, "Icon Theme", "Comment", NULL);
 
                                     /* escape the comment */
                                     comment_escaped = comment ? g_markup_escape_text (comment, -1) : NULL;
@@ -374,7 +374,7 @@ mouse_settings_themes_populate_store (void)
                                 }
 
                                 /* close rc file */
-                                xfce_rc_close (rc);
+                                g_key_file_free (rc);
                             }
                         }
 

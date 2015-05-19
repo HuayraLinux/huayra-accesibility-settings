@@ -8,12 +8,10 @@ huayra_accessibility_settings_SOURCES = 	\
 
 huayra_accessibility_settings_CFLAGS = \
 	$(GTK_CFLAGS) \
-	$(XCURSOR_CFLAGS) \
-	$(XFCE4UTILS_CFLAGS)
+	$(XCURSOR_CFLAGS)
 
 huayra_accessibility_settings_LDADD = \
 	$(GTK_LIBS) \
-	$(XCURSOR_LIBS) \
-	$(XFCE4UTILS_LIBS)
+	$(XCURSOR_LIBS)
 
 CLEANFILES = *~
