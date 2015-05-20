@@ -1,6 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT([huayra-accesibility-settings], [0.1], [mati86dl@gmail.com])
-AC_CONFIG_AUX_DIR([build-aux])
+AC_INIT([huayra-accessibility-settings], [0.8], [mati86dl@gmail.com])
 AM_INIT_AUTOMAKE([1.9.6 -Wall -Werror dist-bzip2])
 
 AC_PROG_CC
@@ -16,5 +15,6 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
         Makefile
         src/Makefile
+        data/Makefile
 ])
 AC_OUTPUT

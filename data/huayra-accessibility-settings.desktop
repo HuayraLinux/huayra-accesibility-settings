@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Opciones de accesibilidad de Huayra
+GenericName=Opciones de accesibilidad de Huayra
+Exec=huayra-accessibility-settings
+Icon=preferences-desktop-accessibility
+Terminal=false
+Categories=Accessibility;Huayra;
+Keywords=accessibility;
