@@ -53,6 +53,30 @@ static GSettings *mouse_settings = NULL;
 
 /* */
 
+/* callback used to open default browser when URLs got clicked */
+static void
+open_url (const gchar *url, GtkWidget *parent)
+{
+	gboolean success = TRUE;
+	const gchar *argv[3];
+	int i = 0;
+
+	if (!gtk_show_uri (NULL, url,  gtk_get_current_event_time (), NULL)) {
+		GtkWidget *dialog = NULL;
+		dialog = gtk_message_dialog_new (GTK_WINDOW (parent),
+		                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+		                                 GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
+		                                 "%s", _("Unable to open the browser"));
+		gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
+		                                          "%s", "No methods supported");
+
+		g_signal_connect (dialog, "response",
+		                  G_CALLBACK (gtk_widget_destroy), NULL);
+
+		gtk_window_present (GTK_WINDOW (dialog));
+	}
+}
+
 static gboolean
 dbus_interface_name_is_running (const gchar *name)
 {
@@ -336,7 +360,17 @@ dialog_response_cb (GtkDialog *dialog,
                     gint       response,
                     gpointer   user_data)
 {
-	gtk_widget_destroy(GTK_WIDGET(dialog));
+	switch (response)
+	{
+		case GTK_RESPONSE_HELP:
+			open_url ("http://wiki.huayra.conectarigualdad.gob.ar/index.php/Accesibilidad",
+			          GTK_WIDGET(dialog));
+			break;
+		case GTK_RESPONSE_OK:
+		default:
+			gtk_widget_destroy(GTK_WIDGET(dialog));
+			break;
+	}
 }
 
 static void
@@ -430,6 +464,7 @@ activate (GtkApplication *app,
 
 	gtk_dialog_add_buttons (GTK_DIALOG (window),
 	                        _("Aceptar"), GTK_RESPONSE_OK,
+	                        _("Ayuda"), GTK_RESPONSE_HELP,
 	                        NULL);
 
 	g_signal_connect (window, "response",
