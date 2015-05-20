@@ -286,6 +286,20 @@ icon_cursor_theme_changed (GtkComboBox *combo,
 }
 
 static void
+on_keyboard_accessibility_activated (GtkButton *button,
+                                     gpointer   user_data)
+{
+	GError *error = NULL;
+	gboolean result;
+
+	result = g_spawn_command_line_async ("mate-keyboard-properties --a11y", &error);
+	if (G_UNLIKELY (result == FALSE)) {
+		g_critical ("Can't launch keyboard %s", error->message);
+		g_error_free (error);
+	}
+}
+
+static void
 on_screen_keyboard_activated (GtkButton *button,
                               gpointer   user_data)
 {
@@ -444,6 +458,15 @@ activate (GtkApplication *app,
 	                 G_SETTINGS_BIND_DEFAULT);
 
 	huayra_hig_workarea_table_add_row (table, &row, label, scale);
+
+	/* Otras opciones */
+
+	huayra_hig_workarea_table_add_section_title (table, &row, _("Otras opciones"));
+
+	button = gtk_button_new_with_label (_("Accesibilidad del teclado"));
+	huayra_hig_workarea_table_add_wide_control (table, &row, button);
+	g_signal_connect (button, "clicked",
+	                  G_CALLBACK(on_keyboard_accessibility_activated), NULL);
 
 	/* Tools */
 
