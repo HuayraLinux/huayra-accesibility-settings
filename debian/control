@@ -1,15 +1,14 @@
 Source: huayra-accesibility-settings
 Section: admin
-Priority: normal
+Priority: extra
 Maintainer: Matías de Lellis <mati86dl@gmail.com>
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Build-Depends: debhelper (>= 8.0.0), libgtk-3-dev, libxcursor-dev, dh-autoreconf
 
 Package: huayra-accesibility-settings
-Depends: ${misc:Depends}, florence, screenruler, mate-control-center,
+Depends: ${misc:Depends}, ${shlibs:Depends}, florence, screenruler, mate-control-center,
  oxygencursors, gnome-accessibility-themes
 Architecture: i386 amd64
-Priority: normal
 Description: Panel de control para activar opciones accesibles
  Este paquete contiene un panel de control para cambiar las opciones
  de accesibilidad en Huayra GNU/Linux con el escritorio Mate
