@@ -1,4 +1,4 @@
-huayra-accesibility-settings (0.0.2) UNRELEASED; urgency=medium
+huayra-accesibility-settings (0.0.2) unstable; urgency=medium
 
   * agregando config de dconf para deshabilitar las combinaciones del teclado
   * corrigiendo warnings de lintian
