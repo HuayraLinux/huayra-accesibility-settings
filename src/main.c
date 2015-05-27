@@ -404,7 +404,7 @@ activate (GtkApplication *app,
 
 	window = gtk_dialog_new ();
 	gtk_window_set_application (GTK_WINDOW (window), app);
-	gtk_window_set_title (GTK_WINDOW (window), _("Huayra Accessibility Settings"));
+	gtk_window_set_title (GTK_WINDOW (window), _("Opciones de accesibilidad de Huayra"));
 	gtk_window_set_icon_name (GTK_WINDOW (window), "preferences-desktop-accessibility");
 	gtk_window_set_default_size (GTK_WINDOW (window), 300, 200);
 
@@ -416,7 +416,7 @@ activate (GtkApplication *app,
 
 	/* Visual */
 
-	huayra_hig_workarea_table_add_section_title (table, &row, _("Visual accessibility"));
+	huayra_hig_workarea_table_add_section_title (table, &row, _("Accesibilidad visual"));
 
 	check_button = gtk_check_button_new_with_label (_("Realzar contraste en los colores"));
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(check_button),
@@ -425,7 +425,7 @@ activate (GtkApplication *app,
 	g_signal_connect (check_button, "toggled",
 	                  G_CALLBACK (high_contrast_checkbutton_toggled), NULL);
 
-	check_button = gtk_check_button_new_with_label (_("Hacer el texto mas grande y facil de leer"));
+	check_button = gtk_check_button_new_with_label (_("Hacer el texto mas grande y fácil de leer"));
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(check_button),
 		large_print_is_selected());
 	huayra_hig_workarea_table_add_wide_control (table, &row, check_button);
@@ -434,7 +434,7 @@ activate (GtkApplication *app,
 
 	/* Cursor */
 
-	label = gtk_label_new (_("Iconos del raton"));
+	label = gtk_label_new (_("Iconos del ratón"));
 	combo = gtk_combo_box_new_with_model (GTK_TREE_MODEL(mouse_settings_themes_populate_store()));
 	cursor_combo_box_select_current_theme (combo);
 	g_signal_connect (combo, "changed",
