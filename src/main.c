@@ -334,7 +334,6 @@ on_screen_ruler_activated (GtkButton *button,
 		g_critical ("Can't launch screen ruler: %s", error->message);
 		g_error_free (error);
 	}
-	g_spawn_command_line_async ("screenruler", &error);
 }
 
 /* */
