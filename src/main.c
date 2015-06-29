@@ -391,6 +391,26 @@ reset_custom_user_changes (void)
 	g_settings_reset (mouse_settings, KEY_CURSOR_SIZE);
 }
 
+static void
+show_accessibility_wiki (GtkWidget *parent)
+{
+	GNetworkMonitor *nmon;
+	GError *error = NULL;
+	gboolean result;
+
+	nmon = g_network_monitor_get_default();
+	if (g_network_monitor_get_network_available(nmon)) {
+		open_url ("http://wiki.huayra.conectarigualdad.gob.ar/index.php/Accesibilidad", parent);
+	}
+	else {
+		result = g_spawn_command_line_async ("huayra-visor-manual articles/a/c/c/Accesibilidad.html", &error);
+		if (G_UNLIKELY (result == FALSE)) {
+			g_critical ("Can't launch huayra-visor-manual: %s", error->message);
+			g_error_free (error);
+		}
+	}
+}
+
 /* */
 
 static void
@@ -401,8 +421,7 @@ dialog_response_cb (GtkDialog *dialog,
 	switch (response)
 	{
 		case GTK_RESPONSE_HELP:
-			open_url ("http://wiki.huayra.conectarigualdad.gob.ar/index.php/Accesibilidad",
-			          GTK_WIDGET(dialog));
+			show_accessibility_wiki (GTK_WIDGET(dialog));
 			break;
 		case GTK_RESPONSE_CANCEL:
 			reset_custom_user_changes ();
