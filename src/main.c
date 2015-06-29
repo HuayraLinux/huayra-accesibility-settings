@@ -45,6 +45,7 @@
 #define KEY_MARCO_THEME  "theme"
 
 #define HIGH_CONTRAST_THEME  "HighContrast"
+#define HIGH_CONTRAST_ICON_THEME "huayra-accesible"
 
 #define FONT_RENDER_SCHEMA "org.mate.font-rendering"
 #define KEY_FONT_DPI       "dpi"
@@ -180,7 +181,7 @@ high_contrast_checkbutton_toggled (GtkToggleButton *button,
 
 	if (gtk_toggle_button_get_active (button)) {
 		g_settings_set_string (interface_settings, KEY_GTK_THEME, HIGH_CONTRAST_THEME);
-		g_settings_set_string (interface_settings, KEY_ICON_THEME, HIGH_CONTRAST_THEME);
+		g_settings_set_string (interface_settings, KEY_ICON_THEME, HIGH_CONTRAST_ICON_THEME);
 	}
 	else {
 		g_settings_reset (interface_settings, KEY_GTK_THEME);
@@ -369,6 +370,30 @@ cursor_combo_box_select_current_theme (GtkWidget *combo)
 /* */
 
 static void
+reset_custom_user_changes (void)
+{
+	GSettings *settings;
+
+	settings = g_settings_new (FONT_RENDER_SCHEMA);
+	g_settings_reset (settings, KEY_FONT_DPI);
+	g_object_unref (settings);
+
+	settings = g_settings_new (INTERFACE_SCHEMA);
+	g_settings_reset (settings, KEY_GTK_THEME);
+	g_settings_reset (settings, KEY_ICON_THEME);
+	g_object_unref (settings);
+
+	settings = g_settings_new (MARCO_SCHEMA);
+	g_settings_reset (settings, KEY_MARCO_THEME);
+	g_object_unref (settings);
+
+	g_settings_reset (mouse_settings, KEY_CURSOR_THEME);
+	g_settings_reset (mouse_settings, KEY_CURSOR_SIZE);
+}
+
+/* */
+
+static void
 dialog_response_cb (GtkDialog *dialog,
                     gint       response,
                     gpointer   user_data)
@@ -378,6 +403,9 @@ dialog_response_cb (GtkDialog *dialog,
 		case GTK_RESPONSE_HELP:
 			open_url ("http://wiki.huayra.conectarigualdad.gob.ar/index.php/Accesibilidad",
 			          GTK_WIDGET(dialog));
+			break;
+		case GTK_RESPONSE_CANCEL:
+			reset_custom_user_changes ();
 			break;
 		case GTK_RESPONSE_OK:
 		default:
@@ -485,6 +513,7 @@ activate (GtkApplication *app,
 	                    table, FALSE, FALSE, 0);
 
 	gtk_dialog_add_buttons (GTK_DIALOG (window),
+	                        _("Revertir cambios"), GTK_RESPONSE_CANCEL,
 	                        _("Aceptar"), GTK_RESPONSE_OK,
 	                        _("Ayuda"), GTK_RESPONSE_HELP,
 	                        NULL);
