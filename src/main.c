@@ -52,6 +52,9 @@
 #define KEY_FONT_DPI       "dpi"
 
 static GSettings *mouse_settings = NULL;
+static GSettings *marco_settings = NULL;
+static GSettings *interface_settings = NULL;
+static GSettings *font_settings = NULL;
 
 /* */
 
@@ -414,6 +417,13 @@ show_accessibility_wiki (GtkWidget *parent)
 }
 
 /* */
+static void
+theme_changed_cb (GSettings *settings, gchar *key, gpointer user_data)
+{
+	g_critical ("Changed %s key", key);
+}
+
+/* */
 
 static void
 dialog_response_cb (GtkDialog *dialog,
@@ -447,6 +457,9 @@ activate (GtkApplication *app,
 	/* Settings */
 
 	mouse_settings = g_settings_new (MOUSE_SCHEMA);
+	marco_settings = g_settings_new (MARCO_SCHEMA);
+	interface_settings = g_settings_new (INTERFACE_SCHEMA);
+	font_settings = g_settings_new (FONT_RENDER_SCHEMA);
 
 	/* Window */
 
@@ -539,6 +552,21 @@ activate (GtkApplication *app,
 	                        _("Ayuda"), GTK_RESPONSE_HELP,
 	                        NULL);
 
+	/* Callback to external changes. */
+
+	g_signal_connect (font_settings, "changed::"KEY_FONT_DPI,
+	                  G_CALLBACK (theme_changed_cb), NULL);
+	g_signal_connect (interface_settings, "changed::"KEY_GTK_THEME,
+	                  G_CALLBACK (theme_changed_cb), NULL);
+	g_signal_connect (interface_settings, "changed::"KEY_ICON_THEME,
+	                  G_CALLBACK (theme_changed_cb), NULL);
+	g_signal_connect (marco_settings, "changed::"KEY_MARCO_THEME,
+	                  G_CALLBACK (theme_changed_cb), NULL);
+	g_signal_connect (mouse_settings, "changed::"KEY_CURSOR_THEME,
+	                  G_CALLBACK (theme_changed_cb), NULL);
+
+	/* Responses buttons */
+
 	g_signal_connect (window, "response",
 	                  G_CALLBACK (dialog_response_cb), NULL);
 
@@ -558,7 +586,11 @@ main (int    argc,
 	g_object_unref (app);
 
 	/* Free resources */
+
 	g_object_unref (mouse_settings);
+	g_object_unref (marco_settings);
+	g_object_unref (interface_settings);
+	g_object_unref (font_settings);
 
 	return status;
 }
