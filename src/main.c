@@ -158,16 +158,12 @@ process_is_running (const char * name)
 static gboolean
 high_contrast_is_selected (void)
 {
-	GSettings *interface_settings = NULL;
 	gchar *gtk_theme = NULL;
 	gboolean high_gtk_theme;
-
-	interface_settings = g_settings_new (INTERFACE_SCHEMA);
 
 	gtk_theme = g_settings_get_string(interface_settings, KEY_GTK_THEME);
 	high_gtk_theme = (g_strcmp0(gtk_theme, HIGH_CONTRAST_THEME) == 0);
 
-	g_object_unref (interface_settings);
 	g_free (gtk_theme);
 
 	return high_gtk_theme;
@@ -177,12 +173,6 @@ static void
 high_contrast_checkbutton_toggled (GtkToggleButton *button,
                                    gpointer         user_data)
 {
-	GSettings *interface_settings = NULL;
-	GSettings *marco_settings = NULL;
-
-	interface_settings = g_settings_new (INTERFACE_SCHEMA);
-	marco_settings = g_settings_new (MARCO_SCHEMA);
-
 	if (gtk_toggle_button_get_active (button)) {
 		g_settings_set_string (interface_settings, KEY_GTK_THEME, HIGH_CONTRAST_THEME);
 		g_settings_set_string (interface_settings, KEY_ICON_THEME, HIGH_CONTRAST_ICON_THEME);
@@ -193,8 +183,6 @@ high_contrast_checkbutton_toggled (GtkToggleButton *button,
 		g_settings_reset (interface_settings, KEY_ICON_THEME);
 		g_settings_reset (marco_settings, KEY_MARCO_THEME);
 	}
-	g_object_unref (interface_settings);
-	g_object_unref (marco_settings);
 }
 
 static double
@@ -244,13 +232,7 @@ get_dpi_from_x_server (void)
 static gboolean
 large_print_is_selected (void)
 {
-	GSettings *settings = NULL;
-	gdouble dpi;
-
-	settings = g_settings_new (FONT_RENDER_SCHEMA);
-	dpi = g_settings_get_double (settings, KEY_FONT_DPI);
-	g_object_unref (settings);
-
+	gdouble dpi = g_settings_get_double (font_settings, KEY_FONT_DPI);
 	return (dpi > get_dpi_from_x_server());
 }
 
@@ -258,21 +240,19 @@ static void
 large_print_checkbutton_toggled (GtkToggleButton *button,
                                  gpointer         user_data)
 {
-	GSettings *settings;
 	gdouble x_dpi, u_dpi;
 
-	settings = g_settings_new (FONT_RENDER_SCHEMA);
+	font_settings = g_settings_new (FONT_RENDER_SCHEMA);
 
 	if (gtk_toggle_button_get_active (button)) {
 		x_dpi = get_dpi_from_x_server ();
 		u_dpi = (double)DPI_FACTOR_LARGER * x_dpi;
 
-		g_settings_set_double (settings, KEY_FONT_DPI, u_dpi);
+		g_settings_set_double (font_settings, KEY_FONT_DPI, u_dpi);
 	}
 	else {
-		g_settings_reset (settings, KEY_FONT_DPI);
+		g_settings_reset (font_settings, KEY_FONT_DPI);
 	}
-	g_object_unref (settings);
 }
 
 static void
@@ -377,20 +357,12 @@ cursor_combo_box_select_current_theme (GtkWidget *combo)
 static void
 reset_custom_user_changes (void)
 {
-	GSettings *settings;
+	g_settings_reset (font_settings, KEY_FONT_DPI);
 
-	settings = g_settings_new (FONT_RENDER_SCHEMA);
-	g_settings_reset (settings, KEY_FONT_DPI);
-	g_object_unref (settings);
+	g_settings_reset (interface_settings, KEY_GTK_THEME);
+	g_settings_reset (interface_settings, KEY_ICON_THEME);
 
-	settings = g_settings_new (INTERFACE_SCHEMA);
-	g_settings_reset (settings, KEY_GTK_THEME);
-	g_settings_reset (settings, KEY_ICON_THEME);
-	g_object_unref (settings);
-
-	settings = g_settings_new (MARCO_SCHEMA);
-	g_settings_reset (settings, KEY_MARCO_THEME);
-	g_object_unref (settings);
+	g_settings_reset (marco_settings, KEY_MARCO_THEME);
 
 	g_settings_reset (mouse_settings, KEY_CURSOR_THEME);
 	g_settings_reset (mouse_settings, KEY_CURSOR_SIZE);
