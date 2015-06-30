@@ -41,11 +41,12 @@
 #define KEY_COLOR_SCHEME "gtk-color-scheme"
 #define KEY_ICON_THEME   "icon-theme"
 
-#define MARCO_SCHEMA     "org.mate.Marco"
+#define MARCO_SCHEMA     "org.mate.Marco.general"
 #define KEY_MARCO_THEME  "theme"
 
 #define HIGH_CONTRAST_THEME  "HighContrast"
 #define HIGH_CONTRAST_ICON_THEME "huayra-accesible"
+#define HIGH_CONTRAST_MARCO_THEME "HuayraAccesible"
 
 #define FONT_RENDER_SCHEMA "org.mate.font-rendering"
 #define KEY_FONT_DPI       "dpi"
@@ -182,6 +183,7 @@ high_contrast_checkbutton_toggled (GtkToggleButton *button,
 	if (gtk_toggle_button_get_active (button)) {
 		g_settings_set_string (interface_settings, KEY_GTK_THEME, HIGH_CONTRAST_THEME);
 		g_settings_set_string (interface_settings, KEY_ICON_THEME, HIGH_CONTRAST_ICON_THEME);
+		g_settings_set_string (marco_settings, KEY_MARCO_THEME, HIGH_CONTRAST_MARCO_THEME);
 	}
 	else {
 		g_settings_reset (interface_settings, KEY_GTK_THEME);
