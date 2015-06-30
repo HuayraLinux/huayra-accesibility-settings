@@ -51,14 +51,22 @@
 #define FONT_RENDER_SCHEMA "org.mate.font-rendering"
 #define KEY_FONT_DPI       "dpi"
 
+
+/* Settings */
+
 static GSettings *mouse_settings = NULL;
 static GSettings *marco_settings = NULL;
 static GSettings *interface_settings = NULL;
 static GSettings *font_settings = NULL;
 
-/* */
+/* Widgets */
+
+static GtkWidget *high_contrast_w = NULL;
+static GtkWidget *high_dpi_w = NULL;
+static GtkWidget *mouse_theme_w = NULL;
 
 /* callback used to open default browser when URLs got clicked */
+
 static void
 open_url (const gchar *url, GtkWidget *parent)
 {
@@ -392,7 +400,20 @@ show_accessibility_wiki (GtkWidget *parent)
 static void
 theme_changed_cb (GSettings *settings, gchar *key, gpointer user_data)
 {
-	g_critical ("Changed %s key", key);
+	if (g_strcmp0(key, KEY_GTK_THEME) == 0) {
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(high_contrast_w),
+			high_contrast_is_selected());
+	}
+	else if (g_strcmp0(key, KEY_FONT_DPI) == 0) {
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(high_dpi_w),
+			large_print_is_selected());
+	}
+	else if (g_strcmp0(key, KEY_CURSOR_THEME) == 0) {
+		cursor_combo_box_select_current_theme (mouse_theme_w);
+	}
+	else {
+		g_critical ("Changed %s key", key);
+	}
 }
 
 /* */
@@ -458,12 +479,16 @@ activate (GtkApplication *app,
 	g_signal_connect (check_button, "toggled",
 	                  G_CALLBACK (high_contrast_checkbutton_toggled), NULL);
 
+	high_contrast_w = check_button;
+
 	check_button = gtk_check_button_new_with_label (_("Hacer el texto mas grande y fácil de leer"));
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(check_button),
 		large_print_is_selected());
 	huayra_hig_workarea_table_add_wide_control (table, &row, check_button);
 	g_signal_connect (check_button, "toggled",
 	                  G_CALLBACK (large_print_checkbutton_toggled), NULL);
+
+	high_dpi_w = check_button;
 
 	/* Cursor */
 
@@ -472,6 +497,8 @@ activate (GtkApplication *app,
 	cursor_combo_box_select_current_theme (combo);
 	g_signal_connect (combo, "changed",
 	                  G_CALLBACK(icon_cursor_theme_changed), NULL);
+
+	mouse_theme_w = combo;
 
 	renderer = gtk_cell_renderer_pixbuf_new ();
 	gtk_cell_layout_pack_start (GTK_CELL_LAYOUT(combo), renderer, TRUE);
