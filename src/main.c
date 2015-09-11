@@ -18,7 +18,10 @@
 #include <gtk/gtk.h>
 
 #include "huayra-hig.h"
+#include "mate-session.h"
 #include "populate-cursors.h"
+
+/* Definitions */
 
 #define _(x) x
 
@@ -30,16 +33,34 @@
 #define DPI_FACTOR_LARGEST 2.0
 #define DPI_DEFAULT        96
 
-/* Dconf settings */
+/* Default accesibility settings */
+
+#define MOBILITY_SCHEMA       "org.mate.applications-at-mobility"
+#define MOBILITY_KEY          "exec"
+#define MOBILITY_STARTUP_KEY  "startup"
+
+#define VISUAL_SCHEMA         "org.mate.applications-at-visual"
+#define VISUAL_KEY            "exec"
+#define VISUAL_STARTUP_KEY    "startup"
+
+/* Mouse settings */
+
+static GSettings *mouse_settings = NULL;
 
 #define MOUSE_SCHEMA     "org.mate.peripherals-mouse"
 #define KEY_CURSOR_THEME "cursor-theme"
 #define KEY_CURSOR_SIZE  "cursor-size"
 
+/* Interface settings */
+
+static GSettings *interface_settings = NULL;
+
 #define INTERFACE_SCHEMA "org.mate.interface"
 #define KEY_GTK_THEME    "gtk-theme"
 #define KEY_COLOR_SCHEME "gtk-color-scheme"
 #define KEY_ICON_THEME   "icon-theme"
+
+static GSettings *marco_settings = NULL;
 
 #define MARCO_SCHEMA     "org.mate.Marco.general"
 #define KEY_MARCO_THEME  "theme"
@@ -48,22 +69,19 @@
 #define HIGH_CONTRAST_ICON_THEME "huayra-accesible"
 #define HIGH_CONTRAST_MARCO_THEME "HuayraAccesible"
 
+static GSettings *font_settings = NULL;
+
 #define FONT_RENDER_SCHEMA "org.mate.font-rendering"
 #define KEY_FONT_DPI       "dpi"
-
-
-/* Settings */
-
-static GSettings *mouse_settings = NULL;
-static GSettings *marco_settings = NULL;
-static GSettings *interface_settings = NULL;
-static GSettings *font_settings = NULL;
 
 /* Widgets */
 
 static GtkWidget *high_contrast_w = NULL;
 static GtkWidget *high_dpi_w = NULL;
 static GtkWidget *mouse_theme_w = NULL;
+
+static GtkWidget *on_screen_keyboard_w;
+static GtkWidget *speacher_w;
 
 /* callback used to open default browser when URLs got clicked */
 
@@ -159,6 +177,14 @@ process_is_running (const char * name)
 	else {
 		return FALSE;
 	}
+}
+
+static gboolean
+need_at_enabled (void)
+{
+	return
+		(gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(on_screen_keyboard_w)) ||
+		 gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(speacher_w)));
 }
 
 /* Settings callbacks */
@@ -279,6 +305,8 @@ icon_cursor_theme_changed (GtkComboBox *combo,
 	g_settings_set_string (mouse_settings, KEY_CURSOR_THEME, active);
 }
 
+/* Launch keyboard */
+
 static void
 on_keyboard_accessibility_activated (GtkButton *button,
                                      gpointer   user_data)
@@ -293,19 +321,141 @@ on_keyboard_accessibility_activated (GtkButton *button,
 	}
 }
 
+/* Accessibility */
+
+#define ACCESSIBILITY_KEY       "accessibility"
+#define ACCESSIBILITY_SCHEMA    "org.mate.interface"
+
 static void
-on_screen_keyboard_activated (GtkButton *button,
-                              gpointer   user_data)
+at_enable (gboolean is_enabled)
 {
+	GSettings *settings = g_settings_new (ACCESSIBILITY_SCHEMA);
+	g_settings_set_boolean (settings, ACCESSIBILITY_KEY, is_enabled);
+	g_object_unref (settings);
+}
+
+static gboolean
+at_is_enable (void)
+{
+	gboolean is_enabled = FALSE;
+	GSettings *settings = g_settings_new (ACCESSIBILITY_SCHEMA);
+	is_enabled = g_settings_get_boolean (settings, ACCESSIBILITY_KEY);
+	g_object_unref (settings);
+
+	return is_enabled;
+}
+
+static void
+do_suggest_logout_responce (GtkDialog *dialog,
+                            gint       response_id,
+                            gpointer   user_data)
+{
+	switch (response_id)
+	{
+		case GTK_RESPONSE_YES:
+			do_logout (NULL);
+			break;
+		case GTK_RESPONSE_NO:
+		default:
+			break;
+	}
+	gtk_widget_destroy (GTK_WIDGET(dialog));
+}
+
+static void
+do_suggest_logout (GtkWidget *parent)
+{
+	GtkWidget *dialog;
+	dialog = gtk_message_dialog_new (GTK_WINDOW(parent),
+	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                 GTK_MESSAGE_INFO,
+	                                 GTK_BUTTONS_YES_NO,
+	                                 _("¿Desea reiniciar su sesión?"));
+	gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG(dialog), _("Para activar algunos cambios debe cerrar la sesión e iniciar nuevamente."));
+
+	g_signal_connect (dialog, "response",
+	                  G_CALLBACK (do_suggest_logout_responce),
+	                  dialog);
+
+	gtk_widget_show_all(dialog);
+}
+
+static gboolean
+on_speach_is_activated (void)
+{
+	GSettings *visual_settings = NULL;
+	gboolean active = FALSE, enabled = FALSE;
+	gchar *speacher = NULL;
+
+	visual_settings = g_settings_new (VISUAL_SCHEMA);
+	speacher = g_settings_get_string (visual_settings, VISUAL_KEY);
+	enabled = g_settings_get_boolean (visual_settings, VISUAL_STARTUP_KEY);
+	g_object_unref (visual_settings);
+
+	active = !(g_strcmp0(speacher, "orca --replace"));
+	g_free (speacher);
+
+	return active & enabled;
+}
+
+static void
+on_speach_activated (GtkToggleButton *button,
+                     gpointer         user_data)
+{
+	GSettings *visual_settings = NULL;
+	gboolean enabled = FALSE, need_at, result;
 	GError *error = NULL;
-	gboolean result;
 
-	/* TODO: Get default app*/
+	enabled = gtk_toggle_button_get_active(button);
 
-	if (dbus_interface_name_is_running ("org.florence.Keyboard"))
+	visual_settings = g_settings_new (VISUAL_SCHEMA);
+	g_settings_set_string (visual_settings, VISUAL_KEY, "orca --replace");
+	g_settings_set_boolean (visual_settings, VISUAL_STARTUP_KEY, enabled);
+	g_object_unref (visual_settings);
+
+	need_at = need_at_enabled();
+	if (need_at != at_is_enable()) {
+		at_enable(need_at);
+		do_suggest_logout(user_data);
+	}
+
+	if (!enabled || process_is_running("orca --replace"))
 		return;
 
-	result = g_spawn_command_line_async ("florence", &error);
+	/* TODO: Set a dconf setting. */
+	result = g_spawn_command_line_async ("orca --replace", &error);
+	if (G_UNLIKELY (result == FALSE)) {
+		g_critical ("Can't launch orca speacher %s", error->message);
+		g_error_free (error);
+	}
+}
+
+static void
+on_screen_keyboard_activated (GtkToggleButton *button,
+                              gpointer         user_data)
+{
+	GSettings *mobility_settings = NULL;
+	gboolean enabled = FALSE, need_at, result;
+	GError *error = NULL;
+
+	enabled = gtk_toggle_button_get_active(button);
+
+	mobility_settings = g_settings_new (MOBILITY_SCHEMA);
+	g_settings_set_string (mobility_settings, MOBILITY_KEY, "onboard");
+	g_settings_set_boolean (mobility_settings, MOBILITY_STARTUP_KEY, enabled);
+	g_object_unref (mobility_settings);
+
+	need_at = need_at_enabled();
+	if (need_at != at_is_enable()) {
+		at_enable(need_at);
+		do_suggest_logout(user_data);
+	}
+
+	if (!enabled || dbus_interface_name_is_running ("org.onboard.Onboard"))
+		return;
+
+	/* TODO: Set a dconf setting. */
+	result = g_spawn_command_line_async ("onboard", &error);
 	if (G_UNLIKELY (result == FALSE)) {
 		g_critical ("Can't launch keyboard %s", error->message);
 		g_error_free (error);
@@ -397,6 +547,7 @@ show_accessibility_wiki (GtkWidget *parent)
 }
 
 /* */
+
 static void
 theme_changed_cb (GSettings *settings, gchar *key, gpointer user_data)
 {
@@ -532,15 +683,28 @@ activate (GtkApplication *app,
 
 	huayra_hig_workarea_table_add_section_title (table, &row, _("Herramientas"));
 
-	button = gtk_button_new_with_label (_("Utilizar teclado en pantalla"));
+	button = gtk_toggle_button_new_with_label (_("Utilizar lector en pantalla"));
 	huayra_hig_workarea_table_add_wide_control (table, &row, button);
-	g_signal_connect (button, "clicked",
-	                  G_CALLBACK(on_screen_keyboard_activated), NULL);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button),
+	                              at_is_enable() && process_is_running("orca --replace"));
+	g_signal_connect (button, "toggled",
+	                  G_CALLBACK(on_speach_activated), window);
+	speacher_w = button;
+
+	button = gtk_toggle_button_new_with_label (_("Utilizar teclado en pantalla"));
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button),
+	                              at_is_enable() && dbus_interface_name_is_running ("org.onboard.Onboard"));
+	huayra_hig_workarea_table_add_wide_control (table, &row, button);
+	g_signal_connect (button, "toggled",
+	                  G_CALLBACK(on_screen_keyboard_activated), window);
+	on_screen_keyboard_w = button;
 
 	button = gtk_button_new_with_label (_("Utilizar regla en pantalla"));
 	huayra_hig_workarea_table_add_wide_control (table, &row, button);
 	g_signal_connect (button, "clicked",
 	                  G_CALLBACK(on_screen_ruler_activated), NULL);
+
+	/* Add table and buttons */
 
 	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area (GTK_DIALOG(window))),
 	                    table, FALSE, FALSE, 0);

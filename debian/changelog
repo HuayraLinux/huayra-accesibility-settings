@@ -1,3 +1,16 @@
+huayra-accesibility-settings (0.8.4) torbellino; urgency=medium
+
+  * Reemplazamos como florence con onboard como teclado en pantalla.
+  * Activa las opciones de accecibilidad automaticamente y suguiere reiniciar la sesión.
+
+ -- Matias De lellis <mati86dl@gmail.com>  Thu, 10 Sep 2015 14:50:33 -0300
+
+huayra-accesibility-settings (0.8.3) torbellino; urgency=medium
+
+  * Implementa el soporte para activar el lector en pantalla orca 
+
+ -- Matias De lellis <mati86dl@gmail.com>  Thu, 10 Sep 2015 13:24:31 -0300
+
 huayra-accesibility-settings (0.8.2) torbellino; urgency=medium
 
   * Selecciona el tema de ventanas de huayra.

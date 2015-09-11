@@ -6,7 +6,7 @@ Standards-Version: 3.9.6
 Build-Depends: debhelper (>= 8.0.0), libgtk-3-dev, libxcursor-dev, dh-autoreconf
 
 Package: huayra-accesibility-settings
-Depends: ${misc:Depends}, ${shlibs:Depends}, florence, screenruler, mate-control-center,
+Depends: ${misc:Depends}, ${shlibs:Depends}, gnome-orca, onboard, screenruler, mate-control-center,
  huayra-cursors-theme, gnome-accessibility-themes, huayra-icon-theme-accesible
 Architecture: i386 amd64
 Description: Panel de control para activar opciones accesibles
