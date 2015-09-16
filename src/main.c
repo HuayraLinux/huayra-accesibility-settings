@@ -345,6 +345,14 @@ at_is_enable (void)
 	return is_enabled;
 }
 
+static gboolean
+at_is_active (GtkWidget *widget)
+{
+	AtkObject *atkobj = NULL;
+	atkobj = gtk_widget_get_accessible (widget);
+	return GTK_IS_ACCESSIBLE (atkobj);
+}
+
 static void
 do_suggest_logout_responce (GtkDialog *dialog,
                             gint       response_id,
@@ -370,32 +378,14 @@ do_suggest_logout (GtkWidget *parent)
 	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
 	                                 GTK_MESSAGE_INFO,
 	                                 GTK_BUTTONS_YES_NO,
-	                                 _("¿Desea reiniciar su sesión?"));
-	gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG(dialog), _("Para activar algunos cambios debe cerrar la sesión e iniciar nuevamente."));
+	                                 _("¿Desea reiniciar su sesión ahora?"));
+ 	gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG(dialog), _("Para activar/desactivar el lector de pantalla o el teclado debe cerrar la sesión e iniciar nuevamente."));
 
 	g_signal_connect (dialog, "response",
 	                  G_CALLBACK (do_suggest_logout_responce),
 	                  dialog);
 
 	gtk_widget_show_all(dialog);
-}
-
-static gboolean
-on_speach_is_activated (void)
-{
-	GSettings *visual_settings = NULL;
-	gboolean active = FALSE, enabled = FALSE;
-	gchar *speacher = NULL;
-
-	visual_settings = g_settings_new (VISUAL_SCHEMA);
-	speacher = g_settings_get_string (visual_settings, VISUAL_KEY);
-	enabled = g_settings_get_boolean (visual_settings, VISUAL_STARTUP_KEY);
-	g_object_unref (visual_settings);
-
-	active = !(g_strcmp0(speacher, "orca --replace"));
-	g_free (speacher);
-
-	return active & enabled;
 }
 
 static void
@@ -409,25 +399,26 @@ on_speach_activated (GtkToggleButton *button,
 	enabled = gtk_toggle_button_get_active(button);
 
 	visual_settings = g_settings_new (VISUAL_SCHEMA);
-	g_settings_set_string (visual_settings, VISUAL_KEY, "orca --replace");
+	g_settings_set_string (visual_settings, VISUAL_KEY, "orca");
 	g_settings_set_boolean (visual_settings, VISUAL_STARTUP_KEY, enabled);
 	g_object_unref (visual_settings);
 
-	need_at = need_at_enabled();
-	if (need_at != at_is_enable()) {
-		at_enable(need_at);
-		do_suggest_logout(user_data);
-	}
-
-	if (!enabled || process_is_running("orca --replace"))
-		return;
-
-	/* TODO: Set a dconf setting. */
-	result = g_spawn_command_line_async ("orca --replace", &error);
-	if (G_UNLIKELY (result == FALSE)) {
-		g_critical ("Can't launch orca speacher %s", error->message);
-		g_error_free (error);
-	}
+	need_at = need_at_enabled ();
+	if (need_at != at_is_enable ())
+		at_enable (need_at);
+	if (need_at != at_is_active (GTK_WIDGET (button)))
+		do_suggest_logout (user_data);
+}
+static gboolean
+orca_is_running (void)
+{
+	return
+		process_is_running("orca") ||
+		process_is_running("orca --replace") ||
+		process_is_running("/usr/bin/orca") ||
+		process_is_running("/usr/bin/orca --replace") ||
+		process_is_running("/usr/bin/python3 /usr/bin/orca") ||
+		process_is_running("/usr/bin/python3 /usr/bin/orca --replace");
 }
 
 static void
@@ -445,21 +436,11 @@ on_screen_keyboard_activated (GtkToggleButton *button,
 	g_settings_set_boolean (mobility_settings, MOBILITY_STARTUP_KEY, enabled);
 	g_object_unref (mobility_settings);
 
-	need_at = need_at_enabled();
-	if (need_at != at_is_enable()) {
+	need_at = need_at_enabled ();
+	if (need_at != at_is_enable ())
 		at_enable(need_at);
-		do_suggest_logout(user_data);
-	}
-
-	if (!enabled || dbus_interface_name_is_running ("org.onboard.Onboard"))
-		return;
-
-	/* TODO: Set a dconf setting. */
-	result = g_spawn_command_line_async ("onboard", &error);
-	if (G_UNLIKELY (result == FALSE)) {
-		g_critical ("Can't launch keyboard %s", error->message);
-		g_error_free (error);
-	}
+	if (need_at != at_is_active (GTK_WIDGET (button)))
+		do_suggest_logout (user_data);
 }
 
 static void
@@ -524,6 +505,9 @@ reset_custom_user_changes (void)
 
 	g_settings_reset (mouse_settings, KEY_CURSOR_THEME);
 	g_settings_reset (mouse_settings, KEY_CURSOR_SIZE);
+
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (speacher_w), FALSE);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (on_screen_keyboard_w), FALSE);
 }
 
 static void
@@ -686,7 +670,7 @@ activate (GtkApplication *app,
 	button = gtk_toggle_button_new_with_label (_("Utilizar lector en pantalla"));
 	huayra_hig_workarea_table_add_wide_control (table, &row, button);
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button),
-	                              at_is_enable() && process_is_running("orca --replace"));
+	                              at_is_enable () && orca_is_running ());
 	g_signal_connect (button, "toggled",
 	                  G_CALLBACK(on_speach_activated), window);
 	speacher_w = button;

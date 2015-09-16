@@ -1,3 +1,17 @@
+huayra-accesibility-settings (0.8.6) torbellino; urgency=medium
+
+  * Activa el tema Droid por defecto en el teclado Onboard
+
+ -- Matias De lellis <mati86dl@gmail.com>  Tue, 15 Sep 2015 14:17:50 -0300
+
+huayra-accesibility-settings (0.8.5) torbellino; urgency=medium
+
+  * Comprueba mejor la ejectucion de orca.
+  * Solo ejecuta orca y el teclado virtual reiniciando la session.
+  * Sugiere reinicar la session solo cuando es necesario.
+
+ -- Matias De lellis <mati86dl@gmail.com>  Mon, 14 Sep 2015 14:56:49 -0300
+
 huayra-accesibility-settings (0.8.4) torbellino; urgency=medium
 
   * Reemplazamos como florence con onboard como teclado en pantalla.

@@ -1,2 +1,5 @@
 [org/mate/desktop/accessibility/keyboard]
 enable=false
+
+[org/onboard]
+system-theme-associations = {'Default': '/usr/share/onboard/themes/Droid.theme', 'HuayraLiso': '/usr/share/onboard/themes/Droid.theme', 'HighContrastInverse': 'HighContrastInverse', 'HighContrast': 'HighContrast', 'LowContrast': 'LowContrast'}
