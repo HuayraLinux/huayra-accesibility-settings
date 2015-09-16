@@ -83,6 +83,11 @@ static GtkWidget *mouse_theme_w = NULL;
 static GtkWidget *on_screen_keyboard_w;
 static GtkWidget *speacher_w;
 
+/* Global vars */
+
+static gboolean current_on_screen_keyboard = FALSE;
+static gboolean current_speacher = FALSE;
+
 /* callback used to open default browser when URLs got clicked */
 
 static void
@@ -367,7 +372,7 @@ do_suggest_logout_responce (GtkDialog *dialog,
 		default:
 			break;
 	}
-	gtk_widget_destroy (GTK_WIDGET(dialog));
+	gtk_widget_destroy (GTK_WIDGET(user_data));
 }
 
 static void
@@ -383,64 +388,9 @@ do_suggest_logout (GtkWidget *parent)
 
 	g_signal_connect (dialog, "response",
 	                  G_CALLBACK (do_suggest_logout_responce),
-	                  dialog);
+	                  parent);
 
 	gtk_widget_show_all(dialog);
-}
-
-static void
-on_speach_activated (GtkToggleButton *button,
-                     gpointer         user_data)
-{
-	GSettings *visual_settings = NULL;
-	gboolean enabled = FALSE, need_at, result;
-	GError *error = NULL;
-
-	enabled = gtk_toggle_button_get_active(button);
-
-	visual_settings = g_settings_new (VISUAL_SCHEMA);
-	g_settings_set_string (visual_settings, VISUAL_KEY, "orca");
-	g_settings_set_boolean (visual_settings, VISUAL_STARTUP_KEY, enabled);
-	g_object_unref (visual_settings);
-
-	need_at = need_at_enabled ();
-	if (need_at != at_is_enable ())
-		at_enable (need_at);
-	if (need_at != at_is_active (GTK_WIDGET (button)))
-		do_suggest_logout (user_data);
-}
-static gboolean
-orca_is_running (void)
-{
-	return
-		process_is_running("orca") ||
-		process_is_running("orca --replace") ||
-		process_is_running("/usr/bin/orca") ||
-		process_is_running("/usr/bin/orca --replace") ||
-		process_is_running("/usr/bin/python3 /usr/bin/orca") ||
-		process_is_running("/usr/bin/python3 /usr/bin/orca --replace");
-}
-
-static void
-on_screen_keyboard_activated (GtkToggleButton *button,
-                              gpointer         user_data)
-{
-	GSettings *mobility_settings = NULL;
-	gboolean enabled = FALSE, need_at, result;
-	GError *error = NULL;
-
-	enabled = gtk_toggle_button_get_active(button);
-
-	mobility_settings = g_settings_new (MOBILITY_SCHEMA);
-	g_settings_set_string (mobility_settings, MOBILITY_KEY, "onboard");
-	g_settings_set_boolean (mobility_settings, MOBILITY_STARTUP_KEY, enabled);
-	g_object_unref (mobility_settings);
-
-	need_at = need_at_enabled ();
-	if (need_at != at_is_enable ())
-		at_enable(need_at);
-	if (need_at != at_is_active (GTK_WIDGET (button)))
-		do_suggest_logout (user_data);
 }
 
 static void
@@ -554,6 +504,35 @@ theme_changed_cb (GSettings *settings, gchar *key, gpointer user_data)
 /* */
 
 static void
+save_atk_changes (GtkWidget *widget)
+{
+	GSettings *settings = NULL;
+	gboolean new_speacher = FALSE, new_on_screen_keyboard = FALSE;
+	gboolean need_at = FALSE, at_enabled = FALSE;
+
+	new_speacher = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (speacher_w));
+	settings = g_settings_new (VISUAL_SCHEMA);
+	g_settings_set_boolean (settings, VISUAL_STARTUP_KEY, new_speacher);
+	g_object_unref (settings);
+
+	new_on_screen_keyboard = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (on_screen_keyboard_w));
+	settings = g_settings_new (MOBILITY_SCHEMA);
+	g_settings_set_boolean (settings, MOBILITY_STARTUP_KEY, new_on_screen_keyboard);
+	g_object_unref (settings);
+
+	need_at = (new_speacher || new_on_screen_keyboard);
+	at_enabled = at_is_enable ();
+
+	if (at_enabled != need_at) {
+		at_enable (need_at);
+		do_suggest_logout (widget);
+	}
+	else {
+		gtk_widget_destroy(GTK_WIDGET(widget));
+	}
+}
+
+static void
 dialog_response_cb (GtkDialog *dialog,
                     gint       response,
                     gpointer   user_data)
@@ -567,6 +546,8 @@ dialog_response_cb (GtkDialog *dialog,
 			reset_custom_user_changes ();
 			break;
 		case GTK_RESPONSE_OK:
+			save_atk_changes (GTK_WIDGET(dialog));
+			break;
 		default:
 			gtk_widget_destroy(GTK_WIDGET(dialog));
 			break;
@@ -580,6 +561,7 @@ activate (GtkApplication *app,
 	GtkWidget *window;
 	GtkWidget *table, *label, *check_button, *combo, *scale, *button;
 	GtkCellRenderer *renderer;
+	GSettings *settings = NULL;
 	guint row = 0;
 
 	/* Settings */
@@ -654,6 +636,43 @@ activate (GtkApplication *app,
 
 	huayra_hig_workarea_table_add_row (table, &row, label, scale);
 
+	/* Tools */
+
+	huayra_hig_workarea_table_add_section_title (table, &row, _("Herramientas"));
+
+	/* Screen Speacher. */
+
+	button = gtk_toggle_button_new_with_label (_("Utilizar lector en pantalla"));
+	huayra_hig_workarea_table_add_wide_control (table, &row, button);
+
+	settings = g_settings_new (VISUAL_SCHEMA);
+	g_settings_set_string (settings, VISUAL_KEY, "orca");
+	current_speacher = g_settings_get_boolean (settings, VISUAL_STARTUP_KEY);
+	g_object_unref (settings);
+
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), current_speacher);
+	speacher_w = button;
+
+	/* On Screen Keyboard. */
+
+	button = gtk_toggle_button_new_with_label (_("Utilizar teclado en pantalla"));
+	huayra_hig_workarea_table_add_wide_control (table, &row, button);
+
+	settings = g_settings_new (MOBILITY_SCHEMA);
+	g_settings_set_string (settings, MOBILITY_KEY, "onboard");
+	current_on_screen_keyboard = g_settings_get_boolean (settings, MOBILITY_STARTUP_KEY);
+	g_object_unref (settings);
+
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), current_on_screen_keyboard);
+	on_screen_keyboard_w = button;
+
+	/* Sreen Ruller. */
+
+	button = gtk_button_new_with_label (_("Mostrar regla en pantalla"));
+	huayra_hig_workarea_table_add_wide_control (table, &row, button);
+	g_signal_connect (button, "clicked",
+	                  G_CALLBACK(on_screen_ruler_activated), NULL);
+
 	/* Otras opciones */
 
 	huayra_hig_workarea_table_add_section_title (table, &row, _("Otras opciones"));
@@ -662,31 +681,6 @@ activate (GtkApplication *app,
 	huayra_hig_workarea_table_add_wide_control (table, &row, button);
 	g_signal_connect (button, "clicked",
 	                  G_CALLBACK(on_keyboard_accessibility_activated), NULL);
-
-	/* Tools */
-
-	huayra_hig_workarea_table_add_section_title (table, &row, _("Herramientas"));
-
-	button = gtk_toggle_button_new_with_label (_("Utilizar lector en pantalla"));
-	huayra_hig_workarea_table_add_wide_control (table, &row, button);
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button),
-	                              at_is_enable () && orca_is_running ());
-	g_signal_connect (button, "toggled",
-	                  G_CALLBACK(on_speach_activated), window);
-	speacher_w = button;
-
-	button = gtk_toggle_button_new_with_label (_("Utilizar teclado en pantalla"));
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button),
-	                              at_is_enable() && dbus_interface_name_is_running ("org.onboard.Onboard"));
-	huayra_hig_workarea_table_add_wide_control (table, &row, button);
-	g_signal_connect (button, "toggled",
-	                  G_CALLBACK(on_screen_keyboard_activated), window);
-	on_screen_keyboard_w = button;
-
-	button = gtk_button_new_with_label (_("Utilizar regla en pantalla"));
-	huayra_hig_workarea_table_add_wide_control (table, &row, button);
-	g_signal_connect (button, "clicked",
-	                  G_CALLBACK(on_screen_ruler_activated), NULL);
 
 	/* Add table and buttons */
 

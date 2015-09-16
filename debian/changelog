@@ -1,3 +1,10 @@
+huayra-accesibility-settings (0.8.7) torbellino; urgency=medium
+
+  * Sugiere reiniciar la sesíon al aceptar sobre el dialogo.
+  * Nos independizamos de la ejecucion de orca y onboard.
+
+ -- Matias De lellis <mati86dl@gmail.com>  Wed, 16 Sep 2015 11:42:07 -0300
+
 huayra-accesibility-settings (0.8.6) torbellino; urgency=medium
 
   * Activa el tema Droid por defecto en el teclado Onboard
