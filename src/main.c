@@ -439,6 +439,8 @@ cursor_combo_box_select_current_theme (GtkWidget *combo)
 
 	if (have_found)
 		gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combo), &iter);
+	else
+		gtk_combo_box_set_active (GTK_COMBO_BOX (combo), 0);
 }
 
 /* */
@@ -458,6 +460,8 @@ reset_custom_user_changes (void)
 
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (speacher_w), FALSE);
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (on_screen_keyboard_w), FALSE);
+
+	cursor_combo_box_select_current_theme (mouse_theme_w);
 }
 
 static void
