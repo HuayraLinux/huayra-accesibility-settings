@@ -1,3 +1,9 @@
+huayra-accesibility-settings (0.8.8) torbellino; urgency=medium
+
+  * Selecciona el tema de cursores al resetear cambios.
+
+ -- Matias De lellis <mati86dl@gmail.com>  Thu, 17 Sep 2015 11:23:33 -0300
+
 huayra-accesibility-settings (0.8.7) torbellino; urgency=medium
 
   * Sugiere reiniciar la sesíon al aceptar sobre el dialogo.
