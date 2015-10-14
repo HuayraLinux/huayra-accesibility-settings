@@ -1,3 +1,10 @@
+huayra-accesibility-settings (0.8.9) torbellino; urgency=medium
+
+  * Muestra el dialog cuando se intenta abrir una nueva instancia y solo se
+    encuentra oculto.
+
+ -- Matias De lellis <mati86dl@gmail.com>  Wed, 14 Oct 2015 11:07:39 -0300
+
 huayra-accesibility-settings (0.8.8) torbellino; urgency=medium
 
   * Selecciona el tema de cursores al resetear cambios.

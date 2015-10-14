@@ -76,6 +76,8 @@ static GSettings *font_settings = NULL;
 
 /* Widgets */
 
+static GtkWidget *window = NULL;
+
 static GtkWidget *high_contrast_w = NULL;
 static GtkWidget *high_dpi_w = NULL;
 static GtkWidget *mouse_theme_w = NULL;
@@ -559,10 +561,9 @@ dialog_response_cb (GtkDialog *dialog,
 }
 
 static void
-activate (GtkApplication *app,
-          gpointer        user_data)
+has_activate (GtkApplication *app,
+              gpointer        user_data)
 {
-	GtkWidget *window;
 	GtkWidget *table, *label, *check_button, *combo, *scale, *button;
 	GtkCellRenderer *renderer;
 	GSettings *settings = NULL;
@@ -718,6 +719,13 @@ activate (GtkApplication *app,
 	gtk_widget_show_all (window);
 }
 
+static void
+has_startup (GApplication  *appn,
+             gpointer       user_data)
+{
+	gtk_window_present (GTK_WINDOW (window));
+}
+
 int
 main (int    argc,
       char **argv)
@@ -726,16 +734,21 @@ main (int    argc,
 	int status;
 
 	app = gtk_application_new ("org.accessibility.huayra", G_APPLICATION_FLAGS_NONE);
-	g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
+	g_signal_connect (app, "activate", G_CALLBACK (has_activate), NULL);
+	g_signal_connect (app, "startup", G_CALLBACK (has_startup), NULL);
 	status = g_application_run (G_APPLICATION (app), argc, argv);
 	g_object_unref (app);
 
 	/* Free resources */
 
-	g_object_unref (mouse_settings);
-	g_object_unref (marco_settings);
-	g_object_unref (interface_settings);
-	g_object_unref (font_settings);
+	if(mouse_settings)
+		g_object_unref (mouse_settings);
+	if (marco_settings)
+		g_object_unref (marco_settings);
+	if (interface_settings)
+		g_object_unref (interface_settings);
+	if (font_settings)
+		g_object_unref (font_settings);
 
 	return status;
 }
