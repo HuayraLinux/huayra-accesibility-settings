@@ -1,1 +1,2 @@
 debian/etc/* etc/
+debian/usr/* usr/

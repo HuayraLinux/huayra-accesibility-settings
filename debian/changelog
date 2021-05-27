@@ -1,3 +1,15 @@
+huayra-accesibility-settings (0.8.11) torbellino; urgency=medium
+
+  * Depende de las voces y agrega archivo desktop para orca-
+
+ -- Matias De lellis <mati86dl@gmail.com>  Thu, 27 May 2021 17:27:27 -0300
+
+huayra-accesibility-settings (0.8.10) torbellino; urgency=medium
+
+  * First rebuild to Huayra 5
+
+ -- Matias De lellis <mati86dl@gmail.com>  Thu, 27 May 2021 14:05:31 -0300
+
 huayra-accesibility-settings (0.8.9) torbellino; urgency=medium
 
   * Muestra el dialog cuando se intenta abrir una nueva instancia y solo se
