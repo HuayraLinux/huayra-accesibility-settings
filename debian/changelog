@@ -1,3 +1,10 @@
+huayra-accesibility-settings (0.9+nmu1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Cambiando dependencia de gnome-orca -> orca 
+
+ -- Fernando Toledo <ragnarok@docksud.com.ar>  Thu, 26 Oct 2023 22:27:20 -0300
+
 huayra-accesibility-settings (0.8.11) torbellino; urgency=medium
 
   * Depende de las voces y agrega archivo desktop para orca-
